@@ -7,8 +7,8 @@ The Clinical Nutrition Platform is now **100% complete** and ready for productio
 ## 🔑 Stripe Integration - CONFIGURED
 
 ### Test Keys Configured:
-- **Publishable Key**: `pk_test_51SKkAIKIRFVcVGUq8YWP2sFe6Ag05MMcTo27DIAUqmnJEtXTYuTt0v2uoReyHLEke7UsHLIFvQrckVyMM6i0D4b000jdAIvthN`
-- **Secret Key**: `sk_test_51SKkAIKIRFVcVGUq5AaM8F0oX8479wfG1EsXbMTU8Pm3WhGiDtbMX4vbjr2jViBXgMQDKtOstsWge3g5j9NS33np00AHEy2VGK`
+- **Publishable Key**: `pk_test_...`
+- **Secret Key**: `sk_test_...`
 
 ### Payment Integration Status:
 - ✅ Backend Stripe configuration complete
