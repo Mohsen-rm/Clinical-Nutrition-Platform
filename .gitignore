@@ -38,6 +38,8 @@ coverage/
 backend/.env
 backend/.env.*
 backend/*.sqlite3
+backend/venv/
+backend/.venv/
 backend/media/
 backend/static/
 backend/staticfiles/
@@ -49,11 +51,15 @@ backend/**/migrations/__pycache__/
 frontend/.env
 frontend/.env.*
 frontend/node_modules/
+frontend/.cache/
 frontend/.next/
 frontend/out/
 frontend/build/
 frontend/dist/
 frontend/.parcel-cache/
 frontend/.turbo/
-frontend/.cache/
 frontend/coverage/
+
+# Project-level virtual envs
+venv/
+.venv/
