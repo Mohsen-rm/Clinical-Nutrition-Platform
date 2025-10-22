@@ -63,3 +63,5 @@ frontend/coverage/
 # Project-level virtual envs
 venv/
 .venv/
+frontend/node_modules/
+.env
