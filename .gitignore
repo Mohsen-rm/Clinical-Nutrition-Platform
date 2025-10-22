@@ -1,0 +1,59 @@
+# Global
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Env files
+.env
+*.env
+*.env.*
+
+# Editors/IDEs
+.vscode/
+.idea/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.mypy_cache/
+.pytest_cache/
+
+# Build/artifacts
+build/
+dist/
+coverage/
+.cache/
+.tmp/
+
+# OS/other
+*.sqlite3
+
+# Backend-specific
+backend/.env
+backend/.env.*
+backend/*.sqlite3
+backend/media/
+backend/static/
+backend/staticfiles/
+backend/logs/
+backend/**/__pycache__/
+backend/**/migrations/__pycache__/
+
+# Frontend-specific
+frontend/.env
+frontend/.env.*
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/build/
+frontend/dist/
+frontend/.parcel-cache/
+frontend/.turbo/
+frontend/.cache/
+frontend/coverage/
