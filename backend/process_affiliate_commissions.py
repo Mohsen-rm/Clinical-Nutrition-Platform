@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-سكريبت معالجة العمولات التلقائي - نظام الشراكة 30%
-يتم تشغيله تلقائياً أو يدوياً لمعالجة العمولات المستحقة
+Automatic commission processing script - 30% affiliate system
+Runs automatically or manually to process due commissions
 """
 import os
 import sys
@@ -23,7 +23,7 @@ from apps.affiliates.models import AffiliateCommission, AffiliateStats
 User = get_user_model()
 
 class AffiliateCommissionProcessor:
-    """معالج العمولات التلقائي"""
+    """Automatic commission processor"""
     
     COMMISSION_RATE = Decimal('0.30')  # 30%
     
@@ -33,33 +33,33 @@ class AffiliateCommissionProcessor:
         self.errors = []
     
     def process_new_payments(self):
-        """معالجة المدفوعات الجديدة التي لم تتم معالجة عمولاتها"""
-        print("🔍 البحث عن مدفوعات جديدة لمعالجة العمولات...")
+        """Process new payments whose commissions haven't been processed"""
+        print("🔍 Searching for new payments to process commissions...")
         
-        # البحث عن المدفوعات الناجحة التي لم تتم معالجة عمولاتها
+        # Find successful payments whose commissions haven't been processed
         new_payments = Payment.objects.filter(
             status='succeeded',
-            affiliate_commission__isnull=True,  # لم تتم معالجة العمولة
-            subscription__user__referred_by__isnull=False  # المستخدم تم إحالته
+            affiliate_commission__isnull=True,  # Commission not yet processed
+            subscription__user__referred_by__isnull=False  # User was referred
         ).select_related(
             'subscription__user__referred_by',
             'subscription__plan'
         )
         
-        print(f"📊 تم العثور على {new_payments.count()} مدفوعة جديدة")
+        print(f"📊 Found {new_payments.count()} new payments")
         
         for payment in new_payments:
             try:
                 self._process_payment_commission(payment)
             except Exception as e:
-                error_msg = f"خطأ في معالجة المدفوعة {payment.id}: {str(e)}"
+                error_msg = f"Error processing payment {payment.id}: {str(e)}"
                 self.errors.append(error_msg)
                 print(f"❌ {error_msg}")
         
         return self.processed_count
     
     def _process_payment_commission(self, payment):
-        """معالجة عمولة مدفوعة واحدة"""
+        """Process commission for a single payment"""
         with transaction.atomic():
             subscription = payment.subscription
             referred_user = subscription.user
@@ -68,14 +68,14 @@ class AffiliateCommissionProcessor:
             if not affiliate:
                 return
             
-            # حساب العمولة (30% من المبلغ)
+            # Calculate commission (30% of amount)
             commission_amount = payment.amount * self.COMMISSION_RATE
             
-            print(f"💰 معالجة عمولة: {affiliate.email}")
-            print(f"   المبلغ الأصلي: ${payment.amount}")
-            print(f"   العمولة (30%): ${commission_amount}")
+            print(f"💰 Processing commission: {affiliate.email}")
+            print(f"   Original amount: ${payment.amount}")
+            print(f"   Commission (30%): ${commission_amount}")
             
-            # إنشاء سجل العمولة
+            # Create commission record
             commission = AffiliateCommission.objects.create(
                 affiliate=affiliate,
                 referred_user=referred_user,
@@ -86,79 +86,79 @@ class AffiliateCommissionProcessor:
                 status='pending'
             )
             
-            # تحديث المدفوعة لتسجيل العمولة
+            # Update payment with commission amount
             payment.affiliate_commission = commission_amount
             payment.save()
             
-            # تحديث إحصائيات الشريك
+            # Update affiliate stats
             self._update_affiliate_stats(affiliate)
             
             self.processed_count += 1
             self.total_commission_amount += commission_amount
             
-            print(f"✅ تم إنشاء العمولة بنجاح: ID {commission.id}")
+            print(f"✅ Commission created successfully: ID {commission.id}")
     
     def _update_affiliate_stats(self, affiliate):
-        """تحديث إحصائيات الشريك"""
+        """Update affiliate stats"""
         stats, created = AffiliateStats.objects.get_or_create(user=affiliate)
         stats.update_stats()
         
         if created:
-            print(f"📊 تم إنشاء إحصائيات جديدة للشريك: {affiliate.email}")
+            print(f"📊 Created new stats for affiliate: {affiliate.email}")
         else:
-            print(f"📊 تم تحديث إحصائيات الشريك: {affiliate.email}")
+            print(f"📊 Updated stats for affiliate: {affiliate.email}")
     
     def process_recurring_commissions(self):
-        """معالجة العمولات المتكررة للاشتراكات النشطة"""
-        print("\n🔄 معالجة العمولات المتكررة...")
+        """Process recurring commissions for active subscriptions"""
+        print("\n🔄 Processing recurring commissions...")
         
-        # البحث عن الاشتراكات النشطة التي لها شركاء
+        # Find active subscriptions with affiliates
         active_subscriptions = Subscription.objects.filter(
             status__in=['active', 'trialing'],
             user__referred_by__isnull=False
         ).select_related('user__referred_by', 'plan')
         
-        print(f"📊 تم العثور على {active_subscriptions.count()} اشتراك نشط مع شركاء")
+        print(f"📊 Found {active_subscriptions.count()} active subscriptions with affiliates")
         
-        # معالجة المدفوعات الجديدة لهذه الاشتراكات
+        # Process new payments for these subscriptions
         for subscription in active_subscriptions:
             recent_payments = Payment.objects.filter(
                 subscription=subscription,
                 status='succeeded',
                 affiliate_commission__isnull=True,
-                created_at__gte=timezone.now() - timedelta(days=32)  # آخر شهر
+                created_at__gte=timezone.now() - timedelta(days=32)  # Last month
             )
             
             for payment in recent_payments:
                 try:
                     self._process_payment_commission(payment)
                 except Exception as e:
-                    error_msg = f"خطأ في معالجة العمولة المتكررة للاشتراك {subscription.id}: {str(e)}"
+                    error_msg = f"Error processing recurring commission for subscription {subscription.id}: {str(e)}"
                     self.errors.append(error_msg)
                     print(f"❌ {error_msg}")
     
     def mark_commissions_as_paid(self, affiliate_email=None, commission_ids=None):
-        """تحديد العمولات كمدفوعة (للاستخدام اليدوي)"""
-        print("\n💳 تحديد العمولات كمدفوعة...")
+        """Mark commissions as paid (manual use)"""
+        print("\n💳 Marking commissions as paid...")
         
         query = AffiliateCommission.objects.filter(status='pending')
         
         if affiliate_email:
             query = query.filter(affiliate__email=affiliate_email)
-            print(f"🎯 تصفية للشريك: {affiliate_email}")
+            print(f"🎯 Filter for affiliate: {affiliate_email}")
         
         if commission_ids:
             query = query.filter(id__in=commission_ids)
-            print(f"🎯 تصفية للعمولات: {commission_ids}")
+            print(f"🎯 Filter for commissions: {commission_ids}")
         
         commissions = query.all()
         total_amount = sum(c.commission_amount for c in commissions)
         
-        print(f"📊 سيتم تحديد {len(commissions)} عمولة كمدفوعة")
-        print(f"💰 إجمالي المبلغ: ${total_amount}")
+        print(f"📊 {len(commissions)} commissions will be marked as paid")
+        print(f"💰 Total amount: ${total_amount}")
         
         if len(commissions) > 0:
-            confirm = input("هل تريد المتابعة؟ (y/N): ")
+            confirm = input("Proceed? (y/N): ")
             if confirm.lower() == 'y':
                 with transaction.atomic():
                     for commission in commissions:
@@ -169,16 +169,16 @@ class AffiliateCommissionProcessor:
                         # تحديث إحصائيات الشريك
                         self._update_affiliate_stats(commission.affiliate)
                 
-                print(f"✅ تم تحديد {len(commissions)} عمولة كمدفوعة")
+                print(f"✅ Marked {len(commissions)} commissions as paid")
             else:
-                print("❌ تم إلغاء العملية")
+                print("❌ Operation cancelled")
     
     def generate_commission_report(self):
-        """إنشاء تقرير العمولات"""
-        print("\n📋 تقرير العمولات:")
+        """Generate commission report"""
+        print("\n📋 Commission report:")
         print("=" * 50)
         
-        # إحصائيات عامة
+        # General statistics
         total_commissions = AffiliateCommission.objects.count()
         pending_commissions = AffiliateCommission.objects.filter(status='pending').count()
         paid_commissions = AffiliateCommission.objects.filter(status='paid').count()
@@ -190,22 +190,22 @@ class AffiliateCommissionProcessor:
             c.commission_amount for c in AffiliateCommission.objects.filter(status='paid')
         )
         
-        print(f"📊 إجمالي العمولات: {total_commissions}")
-        print(f"⏳ العمولات المعلقة: {pending_commissions} (${total_pending_amount})")
-        print(f"✅ العمولات المدفوعة: {paid_commissions} (${total_paid_amount})")
+        print(f"📊 Total commissions: {total_commissions}")
+        print(f"⏳ Pending commissions: {pending_commissions} (${total_pending_amount})")
+        print(f"✅ Paid commissions: {paid_commissions} (${total_paid_amount})")
         
-        # أفضل الشركاء
-        print("\n🏆 أفضل الشركاء:")
+        # Top affiliates
+        print("\n🏆 Top affiliates:")
         top_affiliates = AffiliateStats.objects.filter(
             total_commission_earned__gt=0
         ).order_by('-total_commission_earned')[:5]
         
         for i, stats in enumerate(top_affiliates, 1):
             print(f"{i}. {stats.user.email}: ${stats.total_commission_earned} "
-                  f"({stats.total_referrals} إحالات)")
+                  f"({stats.total_referrals} referrals)")
         
-        # العمولات المعلقة حسب الشريك
-        print("\n💰 العمولات المعلقة حسب الشريك:")
+        # Pending commissions by affiliate
+        print("\n💰 Pending commissions by affiliate:")
         pending_by_affiliate = {}
         for commission in AffiliateCommission.objects.filter(status='pending'):
             email = commission.affiliate.email
@@ -217,43 +217,43 @@ class AffiliateCommissionProcessor:
             print(f"  {email}: ${amount}")
     
     def print_summary(self):
-        """طباعة ملخص العملية"""
+        """Print process summary"""
         print("\n" + "=" * 50)
-        print("📋 ملخص معالجة العمولات:")
-        print(f"✅ تم معالجة: {self.processed_count} عمولة")
-        print(f"💰 إجمالي العمولات: ${self.total_commission_amount}")
+        print("📋 Commission processing summary:")
+        print(f"✅ Processed: {self.processed_count} commissions")
+        print(f"💰 Total commissions: ${self.total_commission_amount}")
         
         if self.errors:
-            print(f"❌ الأخطاء: {len(self.errors)}")
+            print(f"❌ Errors: {len(self.errors)}")
             for error in self.errors:
                 print(f"  - {error}")
         else:
-            print("✅ لا توجد أخطاء")
+            print("✅ No errors")
 
 def main():
-    """الدالة الرئيسية"""
-    print("🚀 بدء معالجة العمولات التلقائي")
-    print(f"📅 التاريخ: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    """Main function"""
+    print("🚀 Starting automatic commission processing")
+    print(f"📅 Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print("=" * 50)
     
     processor = AffiliateCommissionProcessor()
     
-    # معالجة المدفوعات الجديدة
+    # Process new payments
     processor.process_new_payments()
     
-    # معالجة العمولات المتكررة
+    # Process recurring commissions
     processor.process_recurring_commissions()
     
-    # إنشاء التقرير
+    # Generate report
     processor.generate_commission_report()
     
-    # طباعة الملخص
+    # Print summary
     processor.print_summary()
     
-    print("\n✅ انتهت معالجة العمولات")
+    print("\n✅ Commission processing completed")
 
 if __name__ == '__main__':
-    # التحقق من المعاملات
+    # Check CLI args
     if len(sys.argv) > 1:
         command = sys.argv[1]
         processor = AffiliateCommissionProcessor()
@@ -267,9 +267,9 @@ if __name__ == '__main__':
             else:
                 processor.mark_commissions_as_paid()
         else:
-            print("الأوامر المتاحة:")
-            print("  python process_affiliate_commissions.py - معالجة العمولات")
-            print("  python process_affiliate_commissions.py report - تقرير العمولات")
-            print("  python process_affiliate_commissions.py pay [email] - تحديد العمولات كمدفوعة")
+            print("Available commands:")
+            print("  python process_affiliate_commissions.py - process commissions")
+            print("  python process_affiliate_commissions.py report - commission report")
+            print("  python process_affiliate_commissions.py pay [email] - mark commissions as paid")
     else:
         main()

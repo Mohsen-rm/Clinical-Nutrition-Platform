@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-أوامر سريعة لإدارة العمولات
+Quick commands for managing commissions
 """
 import os
 import sys
@@ -19,8 +19,8 @@ from apps.affiliates.models import AffiliateCommission, AffiliateStats
 User = get_user_model()
 
 def show_commission_summary():
-    """عرض ملخص العمولات"""
-    print("📊 ملخص العمولات السريع")
+    """Show commission summary"""
+    print("📊 Quick commission summary")
     print("=" * 40)
     
     total = AffiliateCommission.objects.count()
@@ -30,46 +30,46 @@ def show_commission_summary():
     pending_amount = sum(c.commission_amount for c in pending)
     paid_amount = sum(c.commission_amount for c in paid)
     
-    print(f"إجمالي العمولات: {total}")
-    print(f"المعلقة: {pending.count()} (${pending_amount:.2f})")
-    print(f"المدفوعة: {paid.count()} (${paid_amount:.2f})")
+    print(f"Total commissions: {total}")
+    print(f"Pending: {pending.count()} (${pending_amount:.2f})")
+    print(f"Paid: {paid.count()} (${paid_amount:.2f})")
     
     if pending.count() > 0:
-        print(f"\n💰 العمولات المعلقة:")
+        print(f"\n💰 Pending commissions:")
         for commission in pending:
             print(f"  ID {commission.id}: {commission.affiliate.email} - ${commission.commission_amount}")
 
 def pay_all_pending():
-    """دفع جميع العمولات المعلقة"""
+    """Pay all pending commissions"""
     pending = AffiliateCommission.objects.filter(status='pending')
     
     if not pending:
-        print("✅ لا توجد عمولات معلقة")
+        print("✅ No pending commissions")
         return
     
     total_amount = sum(c.commission_amount for c in pending)
-    print(f"💳 سيتم دفع {pending.count()} عمولة بقيمة ${total_amount:.2f}")
+    print(f"💳 Will pay {pending.count()} commissions totaling ${total_amount:.2f}")
     
     for commission in pending:
         commission.status = 'paid'
         commission.paid_at = timezone.now()
         commission.save()
-        print(f"✅ تم دفع عمولة {commission.id}: {commission.affiliate.email} - ${commission.commission_amount}")
+        print(f"✅ Paid commission {commission.id}: {commission.affiliate.email} - ${commission.commission_amount}")
     
-    # تحديث الإحصائيات
+    # Update stats
     affiliates = set(c.affiliate for c in pending)
     for affiliate in affiliates:
         stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
         stats.update_stats()
     
-    print(f"✅ تم دفع جميع العمولات المعلقة")
+    print(f"✅ All pending commissions paid")
 
 def pay_affiliate_commissions(email):
-    """دفع عمولات شريك معين"""
+    """Pay commissions for a specific affiliate"""
     try:
         affiliate = User.objects.get(email=email)
     except User.DoesNotExist:
-        print(f"❌ لم يتم العثور على الشريك: {email}")
+        print(f"❌ Affiliate not found: {email}")
         return
     
     pending = AffiliateCommission.objects.filter(
@@ -78,57 +78,57 @@ def pay_affiliate_commissions(email):
     )
     
     if not pending:
-        print(f"✅ لا توجد عمولات معلقة للشريك: {email}")
+        print(f"✅ No pending commissions for affiliate: {email}")
         return
     
     total_amount = sum(c.commission_amount for c in pending)
-    print(f"💳 سيتم دفع {pending.count()} عمولة للشريك {email} بقيمة ${total_amount:.2f}")
+    print(f"💳 Will pay {pending.count()} commissions to affiliate {email} totaling ${total_amount:.2f}")
     
     for commission in pending:
         commission.status = 'paid'
         commission.paid_at = timezone.now()
         commission.save()
-        print(f"✅ تم دفع عمولة {commission.id}: ${commission.commission_amount}")
+        print(f"✅ Paid commission {commission.id}: ${commission.commission_amount}")
     
-    # تحديث الإحصائيات
+    # Update stats
     stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
     stats.update_stats()
     
-    print(f"✅ تم دفع جميع عمولات الشريك: {email}")
+    print(f"✅ Paid all commissions for affiliate: {email}")
 
 def show_affiliate_details(email):
-    """عرض تفاصيل شريك"""
+    """Show affiliate details"""
     try:
         affiliate = User.objects.get(email=email)
     except User.DoesNotExist:
-        print(f"❌ لم يتم العثور على الشريك: {email}")
+        print(f"❌ Affiliate not found: {email}")
         return
     
-    print(f"👤 تفاصيل الشريك: {email}")
+    print(f"👤 Affiliate details: {email}")
     print("=" * 40)
     
     stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
     stats.update_stats()
     
-    print(f"إجمالي العمولات: ${stats.total_commission_earned:.2f}")
-    print(f"العمولات المدفوعة: ${stats.total_commission_paid:.2f}")
-    print(f"العمولات المعلقة: ${stats.total_commission_pending:.2f}")
-    print(f"إجمالي الإحالات: {stats.total_referrals}")
+    print(f"Total commissions: ${stats.total_commission_earned:.2f}")
+    print(f"Paid commissions: ${stats.total_commission_paid:.2f}")
+    print(f"Pending commissions: ${stats.total_commission_pending:.2f}")
+    print(f"Total referrals: {stats.total_referrals}")
     
-    # العمولات الأخيرة
+    # Recent commissions
     recent = AffiliateCommission.objects.filter(
         affiliate=affiliate
     ).order_by('-created_at')[:5]
     
     if recent:
-        print(f"\nآخر {len(recent)} عمولات:")
+        print(f"\nLast {len(recent)} commissions:")
         for commission in recent:
             print(f"  ${commission.commission_amount:.2f} - {commission.status} - {commission.created_at.strftime('%Y-%m-%d')}")
 
 def main():
-    """الدالة الرئيسية"""
+    """Main function"""
     if len(sys.argv) < 2:
-        print("الأوامر المتاحة:")
+        print("Available commands:")
         print("  python quick_commission_commands.py summary")
         print("  python quick_commission_commands.py pay_all")
         print("  python quick_commission_commands.py pay <email>")
@@ -148,7 +148,7 @@ def main():
         email = sys.argv[2]
         show_affiliate_details(email)
     else:
-        print("❌ أمر غير صحيح")
+        print("❌ Invalid command")
 
 if __name__ == '__main__':
     main()

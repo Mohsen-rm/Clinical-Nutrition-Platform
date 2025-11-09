@@ -1,5 +1,5 @@
 """
-مهام Celery لمعالجة العمولات التلقائية
+Celery tasks for processing automatic commissions
 """
 from celery import shared_task
 from django.utils import timezone
@@ -16,28 +16,28 @@ logger = logging.getLogger(__name__)
 @shared_task
 def process_affiliate_commissions():
     """
-    مهمة معالجة العمولات التلقائية
-    تعمل يومياً لمعالجة المدفوعات الجديدة
+    Automatic commission processing task
+    Runs daily to process new payments
     """
-    logger.info("🚀 بدء معالجة العمولات التلقائية")
+    logger.info("🚀 Starting automatic commission processing")
     
     processed_count = 0
     total_commission_amount = Decimal('0.00')
     commission_rate = Decimal('0.30')  # 30%
     
     try:
-        # البحث عن المدفوعات الناجحة التي لم تتم معالجة عمولاتها
+        # Find successful payments whose commissions haven't been processed
         new_payments = Payment.objects.filter(
             status='succeeded',
-            affiliate_commission__isnull=True,  # لم تتم معالجة العمولة
-            subscription__user__referred_by__isnull=False,  # المستخدم تم إحالته
-            created_at__gte=timezone.now() - timedelta(days=7)  # آخر أسبوع
+            affiliate_commission__isnull=True,  # Commission not processed
+            subscription__user__referred_by__isnull=False,  # User was referred
+            created_at__gte=timezone.now() - timedelta(days=7)  # Last week
         ).select_related(
             'subscription__user__referred_by',
             'subscription__plan'
         )
         
-        logger.info(f"📊 تم العثور على {new_payments.count()} مدفوعة جديدة")
+        logger.info(f"📊 Found {new_payments.count()} new payments")
         
         for payment in new_payments:
             try:
@@ -49,10 +49,10 @@ def process_affiliate_commissions():
                     if not affiliate:
                         continue
                     
-                    # حساب العمولة (30% من المبلغ)
+                    # Calculate commission (30% of amount)
                     commission_amount = payment.amount * commission_rate
                     
-                    # إنشاء سجل العمولة
+                    # Create commission record
                     commission = AffiliateCommission.objects.create(
                         affiliate=affiliate,
                         referred_user=referred_user,
@@ -63,24 +63,24 @@ def process_affiliate_commissions():
                         status='pending'
                     )
                     
-                    # تحديث المدفوعة لتسجيل العمولة
+                    # Update payment to record commission
                     payment.affiliate_commission = commission_amount
                     payment.save()
                     
-                    # تحديث إحصائيات الشريك
+                    # Update affiliate stats
                     stats, created = AffiliateStats.objects.get_or_create(user=affiliate)
                     stats.update_stats()
                     
                     processed_count += 1
                     total_commission_amount += commission_amount
                     
-                    logger.info(f"✅ تم إنشاء عمولة: {affiliate.email} - ${commission_amount}")
-                    
+                    logger.info(f"✅ Commission created: {affiliate.email} - ${commission_amount}")
+                
             except Exception as e:
-                logger.error(f"❌ خطأ في معالجة المدفوعة {payment.id}: {str(e)}")
+                logger.error(f"❌ Error processing payment {payment.id}: {str(e)}")
                 continue
         
-        logger.info(f"✅ انتهت معالجة العمولات: {processed_count} عمولة، إجمالي ${total_commission_amount}")
+        logger.info(f"✅ Commission processing finished: {processed_count} commissions, total ${total_commission_amount}")
         
         return {
             'processed_count': processed_count,
@@ -89,7 +89,7 @@ def process_affiliate_commissions():
         }
         
     except Exception as e:
-        logger.error(f"❌ خطأ في معالجة العمولات: {str(e)}")
+        logger.error(f"❌ Error processing commissions: {str(e)}")
         return {
             'processed_count': 0,
             'total_amount': 0,
@@ -100,13 +100,13 @@ def process_affiliate_commissions():
 @shared_task
 def update_affiliate_stats():
     """
-    مهمة تحديث إحصائيات الشركاء
-    تعمل يومياً لتحديث جميع الإحصائيات
+    Task to update affiliate stats
+    Runs daily to update all stats
     """
-    logger.info("🔄 بدء تحديث إحصائيات الشركاء")
+    logger.info("🔄 Starting affiliates stats update")
     
     try:
-        # الحصول على جميع الشركاء
+        # Get all affiliates
         from django.contrib.auth import get_user_model
         User = get_user_model()
         
@@ -122,13 +122,13 @@ def update_affiliate_stats():
                 updated_count += 1
                 
                 if created:
-                    logger.info(f"➕ تم إنشاء إحصائيات جديدة: {affiliate.email}")
+                    logger.info(f"➕ Created new stats: {affiliate.email}")
                 
             except Exception as e:
-                logger.error(f"❌ خطأ في تحديث إحصائيات {affiliate.email}: {str(e)}")
+                logger.error(f"❌ Error updating stats for {affiliate.email}: {str(e)}")
                 continue
         
-        logger.info(f"✅ تم تحديث إحصائيات {updated_count} شريك")
+        logger.info(f"✅ Updated stats for {updated_count} affiliates")
         
         return {
             'updated_count': updated_count,
@@ -136,7 +136,7 @@ def update_affiliate_stats():
         }
         
     except Exception as e:
-        logger.error(f"❌ خطأ في تحديث الإحصائيات: {str(e)}")
+        logger.error(f"❌ Error updating stats: {str(e)}")
         return {
             'updated_count': 0,
             'status': 'error',
@@ -146,10 +146,10 @@ def update_affiliate_stats():
 @shared_task
 def send_commission_notifications():
     """
-    مهمة إرسال إشعارات العمولات
-    تعمل أسبوعياً لإرسال تقارير للشركاء
+    Task to send commission notifications
+    Runs weekly to send reports to affiliates
     """
-    logger.info("📧 بدء إرسال إشعارات العمولات")
+    logger.info("📧 Starting commission notifications sending")
     
     try:
         from django.core.mail import send_mail
@@ -158,7 +158,7 @@ def send_commission_notifications():
         
         User = get_user_model()
         
-        # الحصول على الشركاء الذين لديهم عمولات معلقة
+        # Get affiliates with pending commissions
         affiliates_with_pending = User.objects.filter(
             affiliate_commissions__status='pending'
         ).distinct()
@@ -166,7 +166,7 @@ def send_commission_notifications():
         sent_count = 0
         for affiliate in affiliates_with_pending:
             try:
-                # حساب العمولات المعلقة
+                # Calculate pending commissions
                 pending_commissions = AffiliateCommission.objects.filter(
                     affiliate=affiliate,
                     status='pending'
@@ -174,21 +174,21 @@ def send_commission_notifications():
                 total_pending = sum(c.commission_amount for c in pending_commissions)
                 
                 if total_pending > 0:
-                    # إرسال إيميل
-                    subject = f"تقرير العمولات الأسبوعي - Clinical Nutrition Platform"
+                    # Send email
+                    subject = f"Weekly Commission Report - Clinical Nutrition Platform"
                     message = f"""
-مرحباً {affiliate.first_name or affiliate.email},
+Hello {affiliate.first_name or affiliate.email},
 
-لديك عمولات معلقة في نظام الشراكة:
+You have pending commissions in the affiliate system:
 
-💰 إجمالي العمولات المعلقة: ${total_pending:.2f}
-📊 عدد العمولات: {pending_commissions.count()}
+💰 Total pending commissions: ${total_pending:.2f}
+📊 Number of commissions: {pending_commissions.count()}
 
-يمكنك طلب سحب العمولات من خلال لوحة الشراكة في الموقع.
+You can request a payout from the affiliate dashboard on the site.
 
-شكراً لك على شراكتك معنا!
+Thank you for partnering with us!
 
-فريق Clinical Nutrition Platform
+Clinical Nutrition Platform Team
                     """
                     
                     send_mail(
@@ -200,7 +200,7 @@ def send_commission_notifications():
                     )
                     
                     sent_count += 1
-                    logger.info(f"📧 تم إرسال إشعار إلى: {affiliate.email}")
+                    logger.info(f"📧 Notification sent to: {affiliate.email}")
                 
             except Exception as e:
                 logger.error(f"❌ خطأ في إرسال إشعار إلى {affiliate.email}: {str(e)}")
@@ -214,7 +214,7 @@ def send_commission_notifications():
         }
         
     except Exception as e:
-        logger.error(f"❌ خطأ في إرسال الإشعارات: {str(e)}")
+        logger.error(f"❌ Error sending notifications: {str(e)}")
         return {
             'sent_count': 0,
             'status': 'error',
@@ -224,13 +224,13 @@ def send_commission_notifications():
 @shared_task
 def cleanup_old_commissions():
     """
-    مهمة تنظيف العمولات القديمة
-    تعمل شهرياً لأرشفة العمولات القديمة
+    Task to clean up old commissions
+    Runs monthly to archive old commissions
     """
-    logger.info("🧹 بدء تنظيف العمولات القديمة")
+    logger.info("🧹 Starting old commissions cleanup")
     
     try:
-        # أرشفة العمولات المدفوعة الأقدم من سنة
+        # Archive paid commissions older than a year
         old_date = timezone.now() - timedelta(days=365)
         old_commissions = AffiliateCommission.objects.filter(
             status='paid',
@@ -239,10 +239,10 @@ def cleanup_old_commissions():
         
         archived_count = old_commissions.count()
         
-        # يمكن إضافة منطق الأرشفة هنا
-        # مثل نقل البيانات إلى جدول أرشيف
+        # Archiving logic can be added here
+        # e.g., moving data to an archive table
         
-        logger.info(f"📦 تم العثور على {archived_count} عمولة قديمة للأرشفة")
+        logger.info(f"📦 Found {archived_count} old commissions for archiving")
         
         return {
             'archived_count': archived_count,
@@ -250,7 +250,7 @@ def cleanup_old_commissions():
         }
         
     except Exception as e:
-        logger.error(f"❌ خطأ في تنظيف العمولات: {str(e)}")
+        logger.error(f"❌ Error cleaning up commissions: {str(e)}")
         return {
             'archived_count': 0,
             'status': 'error',

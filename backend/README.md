@@ -1,31 +1,31 @@
 # 🔧 Backend Documentation - Clinical Nutrition Platform
 
-## نظرة عامة
+## Overview
 
-Backend مبني باستخدام Django REST Framework ويوفر API شامل لإدارة النظام الطبي مع نظام أدوار، اشتراكات، وشراكة.
+Backend built with Django REST Framework providing a comprehensive API for managing the medical system with roles, subscriptions, and an affiliate program.
 
-## 🏗️ هيكل المشروع
+## 🏗️ Project Structure
 
 ```
 backend/
-├── clinical_platform/          # المشروع الرئيسي
-│   ├── settings.py            # إعدادات Django
-│   ├── urls.py               # URLs الرئيسية
+├── clinical_platform/          # Main project
+│   ├── settings.py            # Django settings
+│   ├── urls.py               # Main URLs
 │   └── wsgi.py               # WSGI configuration
-├── apps/                     # تطبيقات Django
-│   ├── accounts/             # إدارة المستخدمين
-│   ├── subscriptions/        # نظام الاشتراكات
-│   ├── affiliates/          # نظام الشراكة
-│   └── nutrition/           # التغذية العلاجية
-├── requirements.txt         # المكتبات المطلوبة
-├── manage.py               # أداة إدارة Django
-├── .env                    # متغيرات البيئة
-└── create_sample_data.py   # بيانات تجريبية
+├── apps/                     # Django apps
+│   ├── accounts/             # User management
+│   ├── subscriptions/        # Subscription system
+│   ├── affiliates/          # Affiliate system
+│   └── nutrition/           # Clinical nutrition
+├── requirements.txt         # Required packages
+├── manage.py               # Django management tool
+├── .env                    # Environment variables
+└── create_sample_data.py   # Sample data
 ```
 
-## ⚙️ الإعدادات الرئيسية
+## ⚙️ Main Settings
 
-### متغيرات البيئة (.env)
+### Environment variables (.env)
 ```bash
 SECRET_KEY=django-insecure-development-key-change-in-production-12345
 DEBUG=True
@@ -41,27 +41,27 @@ FRONTEND_URL=http://localhost:3000
 REDIS_URL=redis://localhost:6379/0
 ```
 
-## 🚀 تشغيل المشروع
+## 🚀 Run the project
 
 ```bash
-# تفعيل البيئة الافتراضية
+# Activate virtual environment
 cd backend
 source venv/bin/activate
 
-# تثبيت المكتبات
+# Install dependencies
 pip install -r requirements.txt
 
-# تطبيق التغييرات على قاعدة البيانات
+# Apply database migrations
 python manage.py migrate
 
-# إنشاء البيانات التجريبية
+# Create sample data
 python create_sample_data.py
 
-# تشغيل الخادم
+# Start the server
 python manage.py runserver
 ```
 
-## 🔑 بيانات الاختبار
+## 🔑 Test credentials
 
 ```
 Admin: admin@example.com / admin123
@@ -69,72 +69,72 @@ Doctor: doctor@example.com / doctor123
 Patient: patient@example.com / patient123
 ```
 
-## 📡 API Endpoints الرئيسية
+## 📡 Main API Endpoints
 
-### المصادقة
-- `POST /api/auth/login/` - تسجيل الدخول
-- `POST /api/auth/register/` - التسجيل
-- `GET /api/auth/profile/` - الملف الشخصي
+### Authentication
+- `POST /api/auth/login/` - Login
+- `POST /api/auth/register/` - Register
+- `GET /api/auth/profile/` - Profile
 
-### الاشتراكات
-- `GET /api/subscriptions/plans/` - خطط الاشتراك
-- `POST /api/subscriptions/create/` - إنشاء اشتراك مع Stripe
-- `GET /api/subscriptions/status/` - حالة الاشتراك
-- `POST /api/subscriptions/cancel/` - إلغاء الاشتراك
-- `POST /api/subscriptions/payment-intent/` - إنشاء Payment Intent
+### Subscriptions
+- `GET /api/subscriptions/plans/` - Subscription plans
+- `POST /api/subscriptions/create/` - Create subscription with Stripe
+- `GET /api/subscriptions/status/` - Subscription status
+- `POST /api/subscriptions/cancel/` - Cancel subscription
+- `POST /api/subscriptions/payment-intent/` - Create Payment Intent
 - `POST /api/subscriptions/webhook/` - Stripe Webhooks
 
-### الشراكة
-- `GET /api/affiliates/dashboard/` - لوحة تحكم الشراكة
-- `GET /api/affiliates/commissions/` - تاريخ العمولات
-- `POST /api/affiliates/generate-link/` - إنشاء رابط إحالة
+### Affiliates
+- `GET /api/affiliates/dashboard/` - Affiliate dashboard
+- `GET /api/affiliates/commissions/` - Commission history
+- `POST /api/affiliates/generate-link/` - Generate referral link
 
-### التغذية
-- `GET /api/nutrition/plans/` - خطط التغذية
-- `GET /api/nutrition/diseases/` - الأمراض
-- `POST /api/nutrition/calculate/` - حساب السعرات
+### Nutrition
+- `GET /api/nutrition/plans/` - Nutrition plans
+- `GET /api/nutrition/diseases/` - Diseases
+- `POST /api/nutrition/calculate/` - Calorie calculation
 
-## 🆕 التحديثات الأخيرة
+## 🆕 Recent Updates
 
-### إصلاحات نظام الاشتراكات
-- **إصلاح أخطاء Stripe**: حل مشاكل "No such price" و "current_period_start"
-- **تحسين StripeService**: معالجة آمنة للحقول المفقودة من Stripe
-- **تحديث Serializers**: إضافة `plan_id`, `plan_name`, `amount` للواجهة الأمامية
-- **معالجة الأخطاء**: سجلات تفصيلية وmعالجة شاملة للأخطاء
+### Subscription system fixes
+- **Stripe error fixes**: Resolved "No such price" and "current_period_start"
+- **Improved StripeService**: Safe handling of missing fields from Stripe
+- **Updated Serializers**: Added `plan_id`, `plan_name`, `amount` for frontend
+- **Error handling**: Detailed logs and comprehensive error handling
 
-### تحسينات تقنية
+### Technical improvements
 ```python
-# معالجة آمنة لحقول الفترة
+# Safe handling for period fields
 if hasattr(subscription, 'current_period_start') and subscription.current_period_start:
     current_period_start = timezone.datetime.fromtimestamp(
         subscription.current_period_start, tz=timezone.utc
     )
 
-# إذا لم تكن متوفرة، استخدم الوقت الحالي + 30 يوم
+# If not available, use current time + 30 days
 if not current_period_start:
     current_period_start = timezone.now()
 ```
 
-### أسعار Stripe الجديدة
+### New Stripe prices
 ```python
-# تم إنشاء أسعار حقيقية في Stripe
+# Real prices created in Stripe
 Basic Plan: price_1SKnPGKIRFVcVGUq7pDWmpzx ($29/month)
 Professional Plan: price_1SKnPHKIRFVcVGUqPYQOa3Zl ($79/month)  
 Enterprise Plan: price_1SKnPIKIRFVcVGUqHyLdIQkr ($149/month)
 ```
 
-### سكريبتات الاختبار
-- `create_stripe_prices.py` - إنشاء أسعار Stripe
-- `test_subscription_creation.py` - اختبار إنشاء الاشتراكات
-- `test_subscription_api.py` - اختبار شامل لـ API
+### Test scripts
+- `create_stripe_prices.py` - Create Stripe prices
+- `test_subscription_creation.py` - Test creating subscriptions
+- `test_subscription_api.py` - Comprehensive API tests
 
-### الملفات المحدثة
-- `apps/subscriptions/stripe_service.py` - تحسين create_subscription
-- `apps/subscriptions/serializers.py` - إضافة حقول جديدة
-- `apps/subscriptions/views.py` - تحسين معالجة الأخطاء
+### Updated files
+- `apps/subscriptions/stripe_service.py` - Improved create_subscription
+- `apps/subscriptions/serializers.py` - Added new fields
+- `apps/subscriptions/views.py` - Improved error handling
 
 ---
 
-**آخر تحديث**: أكتوبر 2025  
-**الإصدار**: 1.1.0  
-**حالة النظام**: مكتمل ومجهز للإنتاج مع إصلاحات Stripe
+**Last updated**: October 2025  
+**Version**: 1.1.0  
+**System status**: Complete and production-ready with Stripe fixes

@@ -1,38 +1,38 @@
 # 🔧 Backend Documentation - Clinical Nutrition Platform
 
-## نظرة عامة
+## Overview
 
-Backend مبني باستخدام Django REST Framework ويوفر API شامل لإدارة النظام الطبي مع نظام أدوار، اشتراكات، وشراكة.
+Backend built with Django REST Framework providing a comprehensive API for managing the medical system with roles, subscriptions, and an affiliate program.
 
-## 🏗️ هيكل المشروع
+## 🏗️ Project Structure
 
 ```
 backend/
-├── clinical_platform/          # المشروع الرئيسي
+├── clinical_platform/          # Main project
 │   ├── __init__.py
-│   ├── settings.py            # إعدادات Django
-│   ├── urls.py               # URLs الرئيسية
+│   ├── settings.py            # Django settings
+│   ├── urls.py               # Main URLs
 │   ├── wsgi.py               # WSGI configuration
 │   └── asgi.py               # ASGI configuration
-├── apps/                     # تطبيقات Django
-│   ├── accounts/             # إدارة المستخدمين
-│   ├── subscriptions/        # نظام الاشتراكات
-│   ├── affiliates/          # نظام الشراكة
-│   └── nutrition/           # التغذية العلاجية
-├── logs/                    # ملفات السجلات
-├── static/                  # الملفات الثابتة
-├── media/                   # ملفات المستخدمين
-├── requirements.txt         # المكتبات المطلوبة
-├── manage.py               # أداة إدارة Django
-├── .env                    # متغيرات البيئة
-└── create_sample_data.py   # بيانات تجريبية
+├── apps/                     # Django apps
+│   ├── accounts/             # User management
+│   ├── subscriptions/        # Subscription system
+│   ├── affiliates/          # Affiliate system
+│   └── nutrition/           # Clinical nutrition
+├── logs/                    # Log files
+├── static/                  # Static files
+├── media/                   # User-uploaded files
+├── requirements.txt         # Required packages
+├── manage.py               # Django management tool
+├── .env                    # Environment variables
+└── create_sample_data.py   # Sample data
 ```
 
-## ⚙️ الإعدادات الرئيسية
+## ⚙️ Main Settings
 
 ### settings.py
 ```python
-# قاعدة البيانات
+# Database
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -44,7 +44,7 @@ DATABASES = {
     }
 }
 
-# التطبيقات المثبتة
+# Installed apps
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -61,7 +61,7 @@ INSTALLED_APPS = [
     'apps.nutrition',
 ]
 
-# إعدادات JWT
+# JWT settings
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
@@ -69,7 +69,7 @@ SIMPLE_JWT = {
 }
 ```
 
-### متغيرات البيئة (.env)
+### Environment variables (.env)
 ```bash
 SECRET_KEY=django-insecure-development-key-change-in-production-12345
 DEBUG=True
@@ -85,9 +85,9 @@ FRONTEND_URL=http://localhost:3000
 REDIS_URL=redis://localhost:6379/0
 ```
 
-## 👥 تطبيق Accounts
+## 👥 Accounts App
 
-### النماذج (Models)
+### Models
 ```python
 # apps/accounts/models.py
 class User(AbstractUser):
@@ -108,7 +108,7 @@ class Profile(models.Model):
     address = models.TextField(blank=True)
 ```
 
-### العروض (Views)
+### Views
 ```python
 # apps/accounts/views.py
 class RegisterView(generics.CreateAPIView):
@@ -137,9 +137,9 @@ urlpatterns = [
 ]
 ```
 
-## 💳 تطبيق Subscriptions
+## 💳 Subscriptions App
 
-### النماذج
+### Models
 ```python
 # apps/subscriptions/models.py
 class SubscriptionPlan(models.Model):
@@ -164,7 +164,7 @@ class Subscription(models.Model):
     current_period_end = models.DateTimeField()
 ```
 
-### تكامل Stripe
+### Stripe integration
 ```python
 # apps/subscriptions/stripe_utils.py
 import stripe
@@ -210,7 +210,7 @@ def stripe_webhook(request):
     return HttpResponse(status=200)
 ```
 
-## 🤝 تطبيق Affiliates
+## 🤝 Affiliates App
 
 ### النماذج
 ```python
@@ -238,11 +238,11 @@ class PayoutRequest(models.Model):
     processed_at = models.DateTimeField(null=True, blank=True)
 ```
 
-### حساب العمولات
+### Commission calculation
 ```python
 # apps/affiliates/utils.py
 def calculate_commission(subscription):
-    """حساب عمولة 30% من قيمة الاشتراك"""
+    """Calculate 30% commission from the subscription value"""
     commission_rate = Decimal('0.30')
     commission_amount = subscription.plan.price * commission_rate
     
@@ -255,7 +255,7 @@ def calculate_commission(subscription):
             status='pending'
         )
         
-        # تحديث إحصائيات الشريك
+        # Update affiliate stats
         stats, created = AffiliateStats.objects.get_or_create(
             user=subscription.user.referred_by
         )
@@ -264,16 +264,16 @@ def calculate_commission(subscription):
         stats.save()
 ```
 
-## 🏥 تطبيق Nutrition
+## 🏥 Nutrition App
 
-### النماذج
+### Models
 ```python
 # apps/nutrition/models.py
 class Disease(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
     dietary_restrictions = models.TextField()
-    calorie_adjustment = models.IntegerField(default=0)  # تعديل السعرات
+    calorie_adjustment = models.IntegerField(default=0)  # Calorie adjustment
 
 class NutritionPlan(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -301,11 +301,11 @@ class WhatsAppMessage(models.Model):
     sent_at = models.DateTimeField(auto_now_add=True)
 ```
 
-### حساب السعرات الحرارية
+### Calorie calculations
 ```python
 # apps/nutrition/calculations.py
 def calculate_bmr(weight, height, age, gender):
-    """حساب معدل الأيض الأساسي باستخدام معادلة Harris-Benedict"""
+    """Calculate Basal Metabolic Rate using the Harris-Benedict equation"""
     if gender.lower() == 'male':
         bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age)
     else:
@@ -313,7 +313,7 @@ def calculate_bmr(weight, height, age, gender):
     return round(bmr)
 
 def calculate_tdee(bmr, activity_level):
-    """حساب إجمالي الطاقة المستهلكة يومياً"""
+    """Calculate Total Daily Energy Expenditure"""
     activity_multipliers = {
         'sedentary': 1.2,
         'light': 1.375,
@@ -324,15 +324,15 @@ def calculate_tdee(bmr, activity_level):
     return round(bmr * activity_multipliers.get(activity_level, 1.55))
 
 def adjust_for_goal(tdee, goal):
-    """تعديل السعرات حسب الهدف"""
+    """Adjust calories based on goal"""
     if goal == 'lose':
-        return tdee - 500  # نقص 500 سعرة لفقدان 0.5 كيلو أسبوعياً
+        return tdee - 500  # Subtract 500 calories to lose ~0.5 kg/week
     elif goal == 'gain':
-        return tdee + 500  # زيادة 500 سعرة لزيادة 0.5 كيلو أسبوعياً
-    return tdee  # maintain weight
+        return tdee + 500  # Add 500 calories to gain ~0.5 kg/week
+    return tdee  # Maintain weight
 
 def apply_disease_adjustments(calories, diseases):
-    """تطبيق تعديلات الأمراض"""
+    """Apply disease adjustments"""
     total_adjustment = 0
     adjustments = []
     
@@ -346,13 +346,13 @@ def apply_disease_adjustments(calories, diseases):
     return calories + total_adjustment, adjustments
 ```
 
-## 🔧 أوامر الإدارة
+## 🔧 Management commands
 
-### إنشاء بيانات تجريبية
+### Create sample data
 ```python
 # create_sample_data.py
 def create_sample_data():
-    # إنشاء خطط الاشتراك
+    # Create subscription plans
     plans_data = [
         {
             'name': 'Basic Plan',
@@ -363,7 +363,7 @@ def create_sample_data():
         # ...
     ]
     
-    # إنشاء الأمراض
+    # Create diseases
     diseases_data = [
         {
             'name': 'Diabetes Type 2',
@@ -373,7 +373,7 @@ def create_sample_data():
         # ...
     ]
     
-    # إنشاء المستخدمين
+    # Create users
     admin_user = User.objects.create_superuser(
         username='admin',
         email='admin@example.com',
@@ -381,28 +381,28 @@ def create_sample_data():
     )
 ```
 
-### تشغيل المهام
+### Run tasks
 ```bash
-# تطبيق التغييرات على قاعدة البيانات
+# Apply database changes
 python manage.py makemigrations
 python manage.py migrate
 
-# إنشاء مستخدم مدير
+# Create superuser
 python manage.py createsuperuser
 
-# جمع الملفات الثابتة
+# Collect static files
 python manage.py collectstatic
 
-# تشغيل الخادم
+# Run the server
 python manage.py runserver
 
-# إنشاء البيانات التجريبية
+# Create sample data
 python create_sample_data.py
 ```
 
-## 🔒 الأمان والأذونات
+## 🔒 Security and permissions
 
-### أذونات مخصصة
+### Custom permissions
 ```python
 # apps/accounts/permissions.py
 class IsDoctorOrReadOnly(permissions.BasePermission):
@@ -418,7 +418,7 @@ class IsOwnerOrDoctor(permissions.BasePermission):
         return obj.user == request.user
 ```
 
-### حماية API
+### API protection
 ```python
 # settings.py
 REST_FRAMEWORK = {
@@ -439,9 +439,9 @@ REST_FRAMEWORK = {
 }
 ```
 
-## 📊 السجلات والمراقبة
+## 📊 Logging and monitoring
 
-### إعداد السجلات
+### Logging setup
 ```python
 # settings.py
 LOGGING = {
@@ -464,15 +464,15 @@ LOGGING = {
 }
 ```
 
-## 🚀 النشر
+## 🚀 Deployment
 
-### إعداد الإنتاج
+### Production settings
 ```python
 # settings/production.py
 DEBUG = False
 ALLOWED_HOSTS = ['yourdomain.com', 'www.yourdomain.com']
 
-# قاعدة بيانات الإنتاج
+# Production Database
 DATABASES = {
     'default': dj_database_url.parse(os.environ.get('DATABASE_URL'))
 }
@@ -484,7 +484,7 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 ```
 
-### متطلبات الإنتاج
+### Production requirements
 ```txt
 # requirements/production.txt
 -r base.txt
@@ -494,9 +494,9 @@ whitenoise==6.8.2
 sentry-sdk==1.32.0
 ```
 
-## 🧪 الاختبارات
+## 🧪 Tests
 
-### اختبارات الوحدة
+### Unit tests
 ```python
 # apps/accounts/tests.py
 class UserModelTest(TestCase):
@@ -510,40 +510,40 @@ class UserModelTest(TestCase):
         self.assertEqual(user.user_type, 'doctor')
         self.assertFalse(user.is_verified)
 
-# تشغيل الاختبارات
+# Run tests
 python manage.py test
 ```
 
 ## 📡 API Documentation
 
-### نقاط النهاية الرئيسية
+### Main endpoints
 
-#### المصادقة
-- `POST /api/auth/register/` - تسجيل مستخدم جديد
-- `POST /api/auth/login/` - تسجيل الدخول
-- `POST /api/auth/logout/` - تسجيل الخروج
-- `GET /api/auth/profile/` - الحصول على الملف الشخصي
-- `PUT /api/auth/profile/` - تحديث الملف الشخصي
+#### Authentication
+- `POST /api/auth/register/` - Register a new user
+- `POST /api/auth/login/` - Login
+- `POST /api/auth/logout/` - Logout
+- `GET /api/auth/profile/` - Get profile
+- `PUT /api/auth/profile/` - Update profile
 
-#### الاشتراكات
-- `GET /api/subscriptions/plans/` - قائمة خطط الاشتراك
-- `POST /api/subscriptions/create/` - إنشاء اشتراك جديد
-- `GET /api/subscriptions/status/` - حالة الاشتراك الحالي
-- `POST /api/subscriptions/cancel/` - إلغاء الاشتراك
+#### Subscriptions
+- `GET /api/subscriptions/plans/` - List subscription plans
+- `POST /api/subscriptions/create/` - Create a new subscription
+- `GET /api/subscriptions/status/` - Current subscription status
+- `POST /api/subscriptions/cancel/` - Cancel subscription
 
-#### الشراكة
-- `GET /api/affiliates/stats/` - إحصائيات الشراكة
-- `GET /api/affiliates/commissions/` - قائمة العمولات
-- `POST /api/affiliates/payouts/` - طلب سحب الأرباح
+#### Affiliates
+- `GET /api/affiliates/stats/` - Affiliate statistics
+- `GET /api/affiliates/commissions/` - List commissions
+- `POST /api/affiliates/payouts/` - Request payout
 
-#### التغذية
-- `GET /api/nutrition/diseases/` - قائمة الأمراض
-- `POST /api/nutrition/calculate/` - حساب السعرات الحرارية
-- `GET /api/nutrition/plans/` - خطط التغذية
-- `POST /api/nutrition/plans/` - إنشاء خطة تغذية
+#### Nutrition
+- `GET /api/nutrition/diseases/` - List diseases
+- `POST /api/nutrition/calculate/` - Calculate calories
+- `GET /api/nutrition/plans/` - Nutrition plans
+- `POST /api/nutrition/plans/` - Create a nutrition plan
 
 ---
 
-**آخر تحديث**: أكتوبر 2025  
-**الإصدار**: 1.0.0  
-**حالة الكود**: مكتمل ومجهز للإنتاج
+**Last updated**: October 2025  
+**Version**: 1.0.0  
+**Code status**: Complete and production-ready

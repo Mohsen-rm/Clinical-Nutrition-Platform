@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-إنشاء بيانات تجريبية للعمولات لاختبار النظام
+Create sample commission data to test the system
 """
 import os
 import sys
@@ -20,24 +20,24 @@ from apps.affiliates.models import AffiliateCommission, AffiliateStats
 User = get_user_model()
 
 def create_test_commissions():
-    """إنشاء عمولات تجريبية"""
-    print("🚀 إنشاء بيانات تجريبية للعمولات...")
+    """Create test commissions"""
+    print("🚀 Creating sample commission data...")
     
     try:
-        # الحصول على المستخدمين
+        # Get users
         admin = User.objects.get(email='admin@example.com')
         doctor = User.objects.get(email='doctor@example.com')
         patient = User.objects.get(email='patient@example.com')
         
-        # الحصول على خطة اشتراك
+        # Get a subscription plan
         basic_plan = SubscriptionPlan.objects.filter(name__icontains='basic').first()
         if not basic_plan:
-            print("❌ لم يتم العثور على خطة Basic")
+            print("❌ Basic plan not found")
             return
         
-        print(f"📋 استخدام خطة: {basic_plan.name} - ${basic_plan.price}")
+        print(f"📋 Using plan: {basic_plan.name} - ${basic_plan.price}")
         
-        # إنشاء اشتراكات تجريبية إذا لم تكن موجودة
+        # Create sample subscriptions if missing
         subscription1, created = Subscription.objects.get_or_create(
             user=patient,
             defaults={
@@ -50,16 +50,16 @@ def create_test_commissions():
         )
         
         if created:
-            print(f"✅ تم إنشاء اشتراك جديد للمريض")
+            print(f"✅ Created new subscription for patient")
         
-        # إنشاء مدفوعات تجريبية
+        # Create sample payments
         payments_data = [
             {
                 'subscription': subscription1,
                 'amount': Decimal('29.00'),
                 'stripe_payment_intent_id': 'pi_test_001',
                 'status': 'succeeded',
-                'affiliate_commission': None,  # لم تتم معالجة العمولة بعد
+                'affiliate_commission': None,  # Commission not processed yet
             },
             {
                 'subscription': subscription1,
@@ -78,52 +78,52 @@ def create_test_commissions():
             )
             if created:
                 created_payments.append(payment)
-                print(f"✅ تم إنشاء مدفوعة: {payment.stripe_payment_intent_id} - ${payment.amount}")
+                print(f"✅ Created payment: {payment.stripe_payment_intent_id} - ${payment.amount}")
         
-        # تعيين المريض كمُحال من المدير
+        # Set patient as referred by admin
         if not patient.referred_by:
             patient.referred_by = admin
             patient.save()
-            print(f"✅ تم تعيين {patient.email} كمُحال من {admin.email}")
+            print(f"✅ Set {patient.email} as referred by {admin.email}")
         
-        # إنشاء عمولات تجريبية يدوياً
+        # Manually create sample commissions
         commission_data = [
             {
                 'affiliate': admin,
                 'referred_user': patient,
                 'payment': created_payments[0] if created_payments else None,
-                'commission_amount': Decimal('8.70'),  # 30% من $29
+                'commission_amount': Decimal('8.70'),  # 30% of $29
                 'commission_percentage': Decimal('30.00'),
                 'commission_type': 'subscription',
                 'status': 'pending',
-                'notes': 'عمولة تجريبية - اشتراك شهري'
+                'notes': 'Sample commission - monthly subscription'
             },
             {
                 'affiliate': admin,
                 'referred_user': patient,
                 'payment': created_payments[1] if len(created_payments) > 1 else None,
-                'commission_amount': Decimal('8.70'),  # 30% من $29
+                'commission_amount': Decimal('8.70'),  # 30% of $29
                 'commission_percentage': Decimal('30.00'),
                 'commission_type': 'subscription',
                 'status': 'pending',
-                'notes': 'عمولة تجريبية - تجديد شهري'
+                'notes': 'Sample commission - monthly renewal'
             },
             {
                 'affiliate': doctor,
                 'referred_user': patient,
-                'payment': None,  # عمولة يدوية
+                'payment': None,  # Manual commission
                 'commission_amount': Decimal('15.00'),
                 'commission_percentage': Decimal('30.00'),
                 'commission_type': 'one_time',
                 'status': 'paid',
                 'paid_at': timezone.now(),
-                'notes': 'عمولة يدوية - مكافأة خاصة'
+                'notes': 'Manual commission - special bonus'
             },
         ]
         
         created_commissions = []
         for comm_data in commission_data:
-            # التحقق من عدم وجود العمولة مسبقاً
+            # Ensure commission does not already exist
             existing = AffiliateCommission.objects.filter(
                 affiliate=comm_data['affiliate'],
                 referred_user=comm_data['referred_user'],
@@ -134,35 +134,35 @@ def create_test_commissions():
             if not existing:
                 commission = AffiliateCommission.objects.create(**comm_data)
                 created_commissions.append(commission)
-                print(f"✅ تم إنشاء عمولة: {commission.affiliate.email} - ${commission.commission_amount} ({commission.status})")
+                print(f"✅ Created commission: {commission.affiliate.email} - ${commission.commission_amount} ({commission.status})")
         
-        # تحديث إحصائيات الشركاء
+        # Update affiliate stats
         for affiliate in [admin, doctor]:
             stats, created = AffiliateStats.objects.get_or_create(user=affiliate)
             stats.update_stats()
             if created:
-                print(f"✅ تم إنشاء إحصائيات جديدة: {affiliate.email}")
+                print(f"✅ Created new stats: {affiliate.email}")
             else:
-                print(f"🔄 تم تحديث إحصائيات: {affiliate.email}")
+                print(f"🔄 Updated stats: {affiliate.email}")
         
-        print(f"\n📊 ملخص البيانات المُنشأة:")
-        print(f"💳 المدفوعات: {len(created_payments)}")
-        print(f"💰 العمولات: {len(created_commissions)}")
+        print(f"\n📊 Summary of created data:")
+        print(f"💳 Payments: {len(created_payments)}")
+        print(f"💰 Commissions: {len(created_commissions)}")
         
-        # عرض الإحصائيات
-        print(f"\n📈 إحصائيات الشركاء:")
+        # Show stats
+        print(f"\n📈 Affiliate stats:")
         for affiliate in [admin, doctor]:
             stats = AffiliateStats.objects.get(user=affiliate)
             print(f"{affiliate.email}:")
-            print(f"  إجمالي العمولات: ${stats.total_commission_earned}")
-            print(f"  العمولات المدفوعة: ${stats.total_commission_paid}")
-            print(f"  العمولات المعلقة: ${stats.total_commission_pending}")
-            print(f"  إجمالي الإحالات: {stats.total_referrals}")
+            print(f"  Total commissions: ${stats.total_commission_earned}")
+            print(f"  Paid commissions: ${stats.total_commission_paid}")
+            print(f"  Pending commissions: ${stats.total_commission_pending}")
+            print(f"  Total referrals: {stats.total_referrals}")
         
-        print("\n✅ تم إنشاء جميع البيانات التجريبية بنجاح!")
+        print("\n✅ All sample data created successfully!")
         
     except Exception as e:
-        print(f"❌ خطأ في إنشاء البيانات: {str(e)}")
+        print(f"❌ Error creating data: {str(e)}")
         import traceback
         traceback.print_exc()
 

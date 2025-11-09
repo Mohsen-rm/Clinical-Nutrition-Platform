@@ -1,53 +1,53 @@
 # ⚛️ Frontend Documentation - Clinical Nutrition Platform
 
-## نظرة عامة
+## Overview
 
-Frontend مبني باستخدام React 18 مع TypeScript وTailwind CSS لتوفير واجهة مستخدم حديثة وسريعة الاستجابة.
+Frontend built with React 18, TypeScript, and Tailwind CSS to provide a modern, responsive UI.
 
-## 🏗️ هيكل المشروع
+## 🏗️ Project Structure
 
 ```
 frontend/
-├── public/                  # الملفات العامة
-│   ├── index.html          # HTML الرئيسي
-│   └── manifest.json       # إعدادات PWA
+├── public/                  # Public files
+│   ├── index.html          # Main HTML
+│   └── manifest.json       # PWA settings
 ├── src/
-│   ├── components/         # المكونات القابلة للإعادة
-│   │   ├── ui/            # مكونات واجهة المستخدم الأساسية
+│   ├── components/         # Reusable components
+│   │   ├── ui/            # Core UI components
 │   │   │   ├── button.jsx
 │   │   │   ├── card.jsx
 │   │   │   ├── input.jsx
 │   │   │   └── toast.jsx
-│   │   ├── Layout.jsx     # تخطيط الصفحة الرئيسي
-│   │   └── ProtectedRoute.jsx # حماية الصفحات
-│   ├── pages/             # صفحات التطبيق
-│   │   ├── Home.jsx       # الصفحة الرئيسية
-│   │   ├── Login.jsx      # تسجيل الدخول
-│   │   ├── Register.jsx   # التسجيل
-│   │   ├── Dashboard.jsx  # لوحة التحكم
-│   │   ├── Subscription.jsx # إدارة الاشتراكات
-│   │   ├── SubscriptionPlans.jsx # اختيار الخطط
-│   │   ├── Checkout.jsx   # صفحة الدفع
-│   │   ├── Affiliate.jsx  # الشراكة
-│   │   ├── Profile.jsx    # الملف الشخصي
-│   │   └── NutritionPlan.jsx # خطط التغذية
-│   ├── lib/               # المكتبات المساعدة
-│   │   ├── api.js         # عميل API
-│   │   └── utils.js       # وظائف مساعدة
-│   ├── store/             # إدارة الحالة
-│   │   └── authStore.js   # حالة المصادقة
-│   ├── App.js             # المكون الرئيسي
-│   ├── index.js           # نقطة الدخول
-│   └── index.css          # الأنماط الرئيسية
-├── package.json           # تبعيات المشروع
-├── tailwind.config.js     # إعداد Tailwind
-├── postcss.config.js      # إعداد PostCSS
-└── .env                   # متغيرات البيئة
+│   │   ├── Layout.jsx     # Main page layout
+│   │   └── ProtectedRoute.jsx # Route protection
+│   ├── pages/             # App pages
+│   │   ├── Home.jsx       # Home page
+│   │   ├── Login.jsx      # Login
+│   │   ├── Register.jsx   # Register
+│   │   ├── Dashboard.jsx  # Dashboard
+│   │   ├── Subscription.jsx # Subscription management
+│   │   ├── SubscriptionPlans.jsx # Plan selection
+│   │   ├── Checkout.jsx   # Checkout page
+│   │   ├── Affiliate.jsx  # Affiliate
+│   │   ├── Profile.jsx    # Profile
+│   │   └── NutritionPlan.jsx # Nutrition plans
+│   ├── lib/               # Helper libraries
+│   │   ├── api.js         # API client
+│   │   └── utils.js       # Helper functions
+│   ├── store/             # State management
+│   │   └── authStore.js   # Auth state
+│   ├── App.js             # Root component
+│   ├── index.js           # Entry point
+│   └── index.css          # Global styles
+├── package.json           # Project dependencies
+├── tailwind.config.js     # Tailwind config
+├── postcss.config.js      # PostCSS config
+└── .env                   # Environment variables
 ```
 
-## 📦 التبعيات الرئيسية
+## 📦 Main Dependencies
 
-### المكتبات الأساسية
+### Core libraries
 ```json
 {
   "react": "^18.2.0",
@@ -58,7 +58,7 @@ frontend/
 }
 ```
 
-### واجهة المستخدم
+### UI
 ```json
 {
   "tailwindcss": "^3.3.0",
@@ -69,7 +69,7 @@ frontend/
 }
 ```
 
-### المدفوعات والAPI
+### Payments and API
 ```json
 {
   "@stripe/stripe-js": "^2.4.0",
@@ -78,7 +78,7 @@ frontend/
 }
 ```
 
-## 🎨 نظام التصميم
+## 🎨 Design System
 
 ### إعداد Tailwind CSS
 ```javascript
@@ -98,7 +98,7 @@ module.exports = {
 }
 ```
 
-### المتغيرات CSS
+### CSS variables
 ```css
 /* src/index.css */
 :root {
@@ -109,7 +109,7 @@ module.exports = {
 }
 ```
 
-## 🔧 إدارة الحالة
+## 🔧 State Management
 
 ### Zustand Store
 ```javascript
@@ -136,9 +136,9 @@ const useAuthStore = create(
 );
 ```
 
-## 📡 تكامل API
+## 📡 API Integration
 
-### عميل HTTP
+### HTTP client
 ```javascript
 // src/lib/api.js
 const api = axios.create({
@@ -146,7 +146,7 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' }
 });
 
-// إضافة الرمز المميز تلقائياً
+// Add token automatically
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -156,9 +156,9 @@ api.interceptors.request.use((config) => {
 });
 ```
 
-### استخدام React Query
+### Using React Query
 ```javascript
-// في المكونات
+// In components
 const { data: plans, isLoading } = useQuery({
   queryKey: ['subscription-plans'],
   queryFn: subscriptionAPI.getPlans,
@@ -173,7 +173,7 @@ const mutation = useMutation({
 });
 ```
 
-## 🔐 المصادقة والحماية
+## 🔐 Authentication & Protection
 
 ### حماية الصفحات
 ```javascript
@@ -190,7 +190,7 @@ const ProtectedRoute = ({ children }) => {
 };
 ```
 
-### تجديد الرموز المميزة
+### Token refresh
 ```javascript
 // تجديد تلقائي للرموز
 api.interceptors.response.use(
@@ -216,9 +216,9 @@ api.interceptors.response.use(
 );
 ```
 
-## 💳 تكامل Stripe
+## 💳 Stripe Integration
 
-### إعداد Stripe
+### Setup Stripe
 ```javascript
 // src/App.js
 import { loadStripe } from '@stripe/stripe-js';
@@ -235,9 +235,9 @@ function App() {
 }
 ```
 
-### معالجة الدفع المحدثة
+### Updated payment flow
 ```javascript
-// src/pages/Checkout.jsx - التدفق المحسن
+// src/pages/Checkout.jsx - improved flow
 const CheckoutForm = ({ plan }) => {
   const stripe = useStripe();
   const elements = useElements();
@@ -245,14 +245,14 @@ const CheckoutForm = ({ plan }) => {
   const handleSubmit = async (event) => {
     event.preventDefault();
     
-    // إنشاء PaymentMethod مباشرة
+    // Create PaymentMethod directly
     const { error, paymentMethod } = await stripe.createPaymentMethod({
       type: 'card',
       card: elements.getElement(CardElement),
     });
 
     if (!error) {
-      // إنشاء الاشتراك مباشرة مع PaymentMethod
+      // Create subscription directly with PaymentMethod
       await subscriptionAPI.createSubscription({
         plan_id: plan.id,
         payment_method_id: paymentMethod.id,
@@ -262,9 +262,9 @@ const CheckoutForm = ({ plan }) => {
 };
 ```
 
-## 🎯 الصفحات الرئيسية
+## 🎯 Main Pages
 
-### الصفحة الرئيسية
+### Home page
 ```javascript
 // src/pages/Home.jsx
 const Home = () => {
@@ -275,7 +275,7 @@ const Home = () => {
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Clinical Nutrition Platform
           </h1>
-          {/* باقي المحتوى */}
+          {/* Rest of content */}
         </div>
       </section>
     </div>
@@ -283,7 +283,7 @@ const Home = () => {
 };
 ```
 
-### لوحة التحكم
+### Dashboard
 ```javascript
 // src/pages/Dashboard.jsx
 const Dashboard = () => {
@@ -297,9 +297,9 @@ const Dashboard = () => {
 };
 ```
 
-## 🧩 المكونات الأساسية
+## 🧩 Core Components
 
-### مكون البطاقة
+### Card component
 ```javascript
 // src/components/ui/card.jsx
 const Card = React.forwardRef(({ className, ...props }, ref) => (
@@ -314,7 +314,7 @@ const Card = React.forwardRef(({ className, ...props }, ref) => (
 ));
 ```
 
-### مكون الزر
+### Button component
 ```javascript
 // src/components/ui/button.jsx
 const Button = React.forwardRef(({ className, variant, size, ...props }, ref) => {
@@ -328,9 +328,9 @@ const Button = React.forwardRef(({ className, variant, size, ...props }, ref) =>
 });
 ```
 
-## 🔄 إدارة النماذج
+## 🔄 Form Management
 
-### نموذج تسجيل الدخول
+### Login form
 ```javascript
 // src/pages/Login.jsx
 const Login = () => {
@@ -354,24 +354,24 @@ const Login = () => {
 };
 ```
 
-## 🚀 البناء والنشر
+## 🚀 Build & Deployment
 
-### أوامر التطوير
+### Development commands
 ```bash
-# تشغيل خادم التطوير
+# Start dev server
 npm start
 
-# بناء للإنتاج
+# Build for production
 npm run build
 
-# تشغيل الاختبارات
+# Run tests
 npm test
 
-# تحليل الحزمة
+# Analyze bundle
 npm run analyze
 ```
 
-### إعداد البيئة
+### Environment setup
 ```bash
 # .env
 REACT_APP_API_URL=http://localhost:8000
@@ -379,20 +379,20 @@ REACT_APP_STRIPE_PUBLISHABLE_KEY=pk_test_...
 REACT_APP_FRONTEND_URL=http://localhost:3000
 ```
 
-### بناء الإنتاج
+### Production build
 ```bash
-# بناء الملفات الثابتة
+# Build static files
 npm run build
 
-# نشر على Netlify/Vercel
+# Deploy to Netlify/Vercel
 npm run deploy
 ```
 
-## 🎨 التخصيص والثيمات
+## 🎨 Customization & Themes
 
-### ألوان مخصصة
+### Custom colors
 ```css
-/* إضافة ألوان جديدة */
+/* Add new colors */
 :root {
   --success: 142 76% 36%;
   --warning: 38 92% 50%;
@@ -400,9 +400,9 @@ npm run deploy
 }
 ```
 
-### مكونات مخصصة
+### Custom components
 ```javascript
-// إنشاء مكون جديد
+// Create a new component
 const CustomCard = ({ title, children, ...props }) => (
   <Card {...props}>
     <CardHeader>
@@ -413,27 +413,27 @@ const CustomCard = ({ title, children, ...props }) => (
 );
 ```
 
-## 📱 الاستجابة والموبايل
+## 📱 Responsiveness & Mobile
 
-### نقاط التوقف
+### Breakpoints
 ```javascript
 // Tailwind breakpoints
-sm: '640px',   // الهواتف الكبيرة
-md: '768px',   // الأجهزة اللوحية
-lg: '1024px',  // أجهزة الكمبيوتر المحمولة
-xl: '1280px',  // أجهزة سطح المكتب
+sm: '640px',   // Large phones
+md: '768px',   // Tablets
+lg: '1024px',  // Laptops
+xl: '1280px',  // Desktops
 ```
 
-### تصميم متجاوب
+### Responsive layout
 ```javascript
 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {/* المحتوى */}
+  {/* Content */}
 </div>
 ```
 
-## 🧪 الاختبارات
+## 🧪 Tests
 
-### اختبارات المكونات
+### Component tests
 ```javascript
 // src/components/__tests__/Button.test.js
 import { render, screen } from '@testing-library/react';
@@ -445,9 +445,9 @@ test('renders button with text', () => {
 });
 ```
 
-## 🔧 أدوات التطوير
+## 🔧 Developer Tools
 
-### ESLint و Prettier
+### ESLint & Prettier
 ```json
 // .eslintrc.js
 {
@@ -459,7 +459,7 @@ test('renders button with text', () => {
 }
 ```
 
-### إعداد VS Code
+### VS Code setup
 ```json
 // .vscode/settings.json
 {
@@ -470,46 +470,46 @@ test('renders button with text', () => {
 }
 ```
 
-## 🆕 التحديثات الأخيرة
+## 🆕 Recent Updates
 
-### تحسينات نظام الاشتراكات
-- **صفحة إدارة الاشتراك**: واجهة مخصصة للمشتركين النشطين
-- **صفحة اختيار الخطط**: صفحة منفصلة لعرض جميع الخطط
-- **التوجيه الذكي**: المشتركون يرون إدارة الاشتراك، الجدد يرون اختيار الخطط
-- **تدفق دفع محسن**: استخدام `createPaymentMethod` مباشرة بدلاً من `PaymentIntent`
+### Subscription system improvements
+ - **Subscription Management page**: Dedicated UI for active subscribers
+ - **Plan Selection page**: Separate page to show all plans
+ - **Smart routing**: Active subscribers see management; new users see plans
+ - **Improved payment flow**: Use `createPaymentMethod` directly instead of `PaymentIntent`
 
-### الميزات الجديدة
+### New features
 ```javascript
-// صفحة إدارة الاشتراك للمشتركين النشطين
+// Subscription management page for active subscribers
 if (currentSubscription?.is_active) {
   return <SubscriptionManagementPage />;
 }
 
-// صفحة اختيار الخطط منفصلة
+// Separate plan selection page
 <Route path="/subscription/plans" element={<SubscriptionPlans />} />
 ```
 
-### إصلاحات تقنية
-- **إصلاح أخطاء Stripe**: حل مشاكل "No such price" و "current_period_start"
-- **معالجة الأخطاء**: تحسين معالجة الأخطاء في جميع العمليات
-- **تحديث البيانات**: إضافة `plan_id`, `plan_name`, `amount` للـ serializers
-- **تحسين UX**: واجهات أوضح وأكثر سهولة في الاستخدام
+### Technical fixes
+ - **Stripe bug fixes**: Resolved "No such price" and "current_period_start"
+ - **Error handling**: Improved across all flows
+ - **Data updates**: Added `plan_id`, `plan_name`, `amount` to serializers
+ - **UX improvements**: Clearer, more usable UI
 
-### مسارات جديدة
+### New routes
 ```javascript
-// App.js - المسارات المحدثة
+// App.js - updated routes
 <Route path="/subscription" element={<Subscription />} />
 <Route path="/subscription/plans" element={<SubscriptionPlans />} />
 ```
 
-### تحسينات الواجهة
-- **مؤشرات الخطة الحالية**: تمييز واضح للخطة النشطة
-- **أزرار إدارة**: تغيير الخطة، الإلغاء، تحديث الدفع
-- **معلومات مفصلة**: عرض تفاصيل الاشتراك والأيام المتبقية
-- **تصميم متجاوب**: واجهات محسنة لجميع الأجهزة
+### UI improvements
+ - **Current plan indicators**: Clear highlighting of the active plan
+ - **Management actions**: Change plan, cancel, update payment
+ - **Detailed info**: Show subscription details and remaining days
+ - **Responsive design**: Improved across devices
 
 ---
 
-**آخر تحديث**: أكتوبر 2025  
-**الإصدار**: 1.1.0  
-**حالة الكود**: مكتمل ومجهز للإنتاج مع تحسينات UX
+**Last updated**: October 2025  
+**Version**: 1.1.0  
+**Code status**: Complete and production-ready with UX improvements

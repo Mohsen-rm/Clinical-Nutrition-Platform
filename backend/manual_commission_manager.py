@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-مدير العمولات اليدوي - أدوات إدارة العمولات والمدفوعات
+Manual Commission Manager - Tools to manage commissions and payments
 """
 import os
 import sys
@@ -22,30 +22,30 @@ from apps.affiliates.models import AffiliateCommission, AffiliateStats, PayoutRe
 User = get_user_model()
 
 class ManualCommissionManager:
-    """مدير العمولات اليدوي"""
+    """Manual Commission Manager"""
     
     def __init__(self):
         self.COMMISSION_RATE = Decimal('0.30')  # 30%
     
     def show_main_menu(self):
-        """عرض القائمة الرئيسية"""
+        """Show main menu"""
         while True:
             print("\n" + "=" * 60)
-            print("🏥 مدير العمولات اليدوي - Clinical Nutrition Platform")
+            print("🏥 Manual Commission Manager - Clinical Nutrition Platform")
             print("=" * 60)
-            print("1. 📊 عرض تقرير العمولات")
-            print("2. 👥 عرض الشركاء وإحصائياتهم")
-            print("3. 💰 عرض العمولات المعلقة")
-            print("4. ✅ تحديد عمولات كمدفوعة")
-            print("5. 🔍 البحث عن شريك معين")
-            print("6. 📋 عرض طلبات السحب")
-            print("7. ➕ إنشاء عمولة يدوياً")
-            print("8. 🔄 تحديث إحصائيات الشركاء")
-            print("9. 📈 تقرير مفصل لشريك")
-            print("0. 🚪 خروج")
+            print("1. 📊 Show commissions report")
+            print("2. 👥 Show affiliates and stats")
+            print("3. 💰 Show pending commissions")
+            print("4. ✅ Mark commissions as paid")
+            print("5. 🔍 Search affiliate")
+            print("6. 📋 Show payout requests")
+            print("7. ➕ Create manual commission")
+            print("8. 🔄 Update affiliates' stats")
+            print("9. 📈 Detailed affiliate report")
+            print("0. 🚪 Exit")
             print("-" * 60)
             
-            choice = input("اختر رقم العملية: ").strip()
+            choice = input("Choose an option number: ").strip()
             
             if choice == '1':
                 self.show_commission_report()
@@ -66,17 +66,17 @@ class ManualCommissionManager:
             elif choice == '9':
                 self.detailed_affiliate_report()
             elif choice == '0':
-                print("👋 وداعاً!")
+                print("👋 Goodbye!")
                 break
             else:
-                print("❌ اختيار غير صحيح، حاول مرة أخرى")
+                print("❌ Invalid choice, try again")
     
     def show_commission_report(self):
-        """عرض تقرير العمولات الشامل"""
-        print("\n📋 تقرير العمولات الشامل")
+        """Show comprehensive commissions report"""
+        print("\n📋 Comprehensive commissions report")
         print("=" * 50)
         
-        # إحصائيات عامة
+        # General statistics
         total_commissions = AffiliateCommission.objects.count()
         pending_commissions = AffiliateCommission.objects.filter(status='pending')
         paid_commissions = AffiliateCommission.objects.filter(status='paid')
@@ -84,13 +84,13 @@ class ManualCommissionManager:
         total_pending_amount = sum(c.commission_amount for c in pending_commissions)
         total_paid_amount = sum(c.commission_amount for c in paid_commissions)
         
-        print(f"📊 إجمالي العمولات: {total_commissions}")
-        print(f"⏳ العمولات المعلقة: {pending_commissions.count()} (${total_pending_amount:.2f})")
-        print(f"✅ العمولات المدفوعة: {paid_commissions.count()} (${total_paid_amount:.2f})")
-        print(f"💰 إجمالي العمولات: ${total_pending_amount + total_paid_amount:.2f}")
+        print(f"📊 Total commissions: {total_commissions}")
+        print(f"⏳ Pending commissions: {pending_commissions.count()} (${total_pending_amount:.2f})")
+        print(f"✅ Paid commissions: {paid_commissions.count()} (${total_paid_amount:.2f})")
+        print(f"💰 Total commission amount: ${total_pending_amount + total_paid_amount:.2f}")
         
-        # العمولات حسب الشهر
-        print("\n📅 العمولات حسب الشهر (آخر 6 أشهر):")
+        # Commissions by month
+        print("\n📅 Commissions by month (last 6 months):")
         for i in range(6):
             month_start = timezone.now().replace(day=1) - timedelta(days=30*i)
             month_end = month_start + timedelta(days=32)
@@ -102,10 +102,10 @@ class ManualCommissionManager:
             )
             month_amount = sum(c.commission_amount for c in month_commissions)
             
-            print(f"  {month_start.strftime('%Y-%m')}: {month_commissions.count()} عمولة (${month_amount:.2f})")
+            print(f"  {month_start.strftime('%Y-%m')}: {month_commissions.count()} commissions (${month_amount:.2f})")
         
-        # أفضل الشركاء
-        print("\n🏆 أفضل 10 شركاء:")
+        # Top affiliates
+        print("\n🏆 Top 10 affiliates:")
         top_affiliates = AffiliateStats.objects.filter(
             total_commission_earned__gt=0
         ).order_by('-total_commission_earned')[:10]
@@ -113,13 +113,13 @@ class ManualCommissionManager:
         for i, stats in enumerate(top_affiliates, 1):
             available = stats.total_commission_earned - stats.total_commission_paid
             print(f"{i:2d}. {stats.user.email:<30} "
-                  f"إجمالي: ${stats.total_commission_earned:>8.2f} "
-                  f"متاح: ${available:>8.2f} "
-                  f"إحالات: {stats.total_referrals:>3d}")
+                  f"Total: ${stats.total_commission_earned:>8.2f} "
+                  f"Available: ${available:>8.2f} "
+                  f"Referrals: {stats.total_referrals:>3d}")
     
     def show_affiliates_list(self):
-        """عرض قائمة الشركاء"""
-        print("\n👥 قائمة الشركاء")
+        """Show affiliates list"""
+        print("\n👥 Affiliates list")
         print("=" * 80)
         
         affiliates = User.objects.filter(
@@ -127,10 +127,10 @@ class ManualCommissionManager:
         ).distinct().order_by('email')
         
         if not affiliates:
-            print("❌ لا يوجد شركاء حالياً")
+            print("❌ No affiliates currently")
             return
         
-        print(f"{'#':<3} {'البريد الإلكتروني':<30} {'الإحالات':<8} {'العمولات':<10} {'المدفوع':<10} {'المعلق':<10}")
+        print(f"{'#':<3} {'Email':<30} {'Referrals':<8} {'Commissions':<10} {'Paid':<10} {'Pending':<10}")
         print("-" * 80)
         
         for i, affiliate in enumerate(affiliates, 1):
@@ -144,8 +144,8 @@ class ManualCommissionManager:
                   f"${pending:<9.2f}")
     
     def show_pending_commissions(self):
-        """عرض العمولات المعلقة"""
-        print("\n💰 العمولات المعلقة")
+        """Show pending commissions"""
+        print("\n💰 Pending commissions")
         print("=" * 100)
         
         pending_commissions = AffiliateCommission.objects.filter(
@@ -153,10 +153,10 @@ class ManualCommissionManager:
         ).order_by('-created_at')
         
         if not pending_commissions:
-            print("✅ لا توجد عمولات معلقة")
+            print("✅ No pending commissions")
             return
         
-        print(f"{'ID':<5} {'الشريك':<25} {'المبلغ':<10} {'النوع':<12} {'التاريخ':<12} {'المُحال':<25}")
+        print(f"{'ID':<5} {'Affiliate':<25} {'Amount':<10} {'Type':<12} {'Date':<12} {'Referred':<25}")
         print("-" * 100)
         
         total_pending = Decimal('0.00')
@@ -170,20 +170,20 @@ class ManualCommissionManager:
                   f"{commission.referred_user.email:<25}")
         
         print("-" * 100)
-        print(f"إجمالي العمولات المعلقة: ${total_pending:.2f}")
+        print(f"Total pending commissions: ${total_pending:.2f}")
     
     def mark_commissions_paid(self):
-        """تحديد عمولات كمدفوعة"""
-        print("\n✅ تحديد العمولات كمدفوعة")
+        """Mark commissions as paid"""
+        print("\n✅ Mark commissions as paid")
         print("=" * 50)
         
-        print("اختر طريقة التحديد:")
-        print("1. تحديد جميع العمولات المعلقة")
-        print("2. تحديد عمولات شريك معين")
-        print("3. تحديد عمولات محددة بالـ ID")
-        print("4. العودة للقائمة الرئيسية")
+        print("Choose method:")
+        print("1. Mark all pending commissions")
+        print("2. Mark a specific affiliate's commissions")
+        print("3. Mark specific commissions by ID")
+        print("4. Back to main menu")
         
-        choice = input("اختر رقم العملية: ").strip()
+        choice = input("Choose an option number: ").strip()
         
         if choice == '1':
             self._mark_all_pending_paid()
@@ -194,21 +194,21 @@ class ManualCommissionManager:
         elif choice == '4':
             return
         else:
-            print("❌ اختيار غير صحيح")
+            print("❌ Invalid choice")
     
     def _mark_all_pending_paid(self):
-        """تحديد جميع العمولات المعلقة كمدفوعة"""
+        """Mark all pending commissions as paid"""
         pending_commissions = AffiliateCommission.objects.filter(status='pending')
         total_amount = sum(c.commission_amount for c in pending_commissions)
         
-        print(f"📊 سيتم تحديد {pending_commissions.count()} عمولة كمدفوعة")
-        print(f"💰 إجمالي المبلغ: ${total_amount:.2f}")
+        print(f"📊 {pending_commissions.count()} commissions will be marked as paid")
+        print(f"💰 Total amount: ${total_amount:.2f}")
         
         if pending_commissions.count() == 0:
-            print("❌ لا توجد عمولات معلقة")
+            print("❌ No pending commissions")
             return
         
-        confirm = input("هل تريد المتابعة؟ (y/N): ")
+        confirm = input("Proceed? (y/N): ")
         if confirm.lower() == 'y':
             with transaction.atomic():
                 for commission in pending_commissions:
@@ -216,24 +216,24 @@ class ManualCommissionManager:
                     commission.paid_at = timezone.now()
                     commission.save()
                 
-                # تحديث إحصائيات جميع الشركاء
+                # Update stats for all affiliates
                 affiliates = set(c.affiliate for c in pending_commissions)
                 for affiliate in affiliates:
                     stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
                     stats.update_stats()
             
-            print(f"✅ تم تحديد {pending_commissions.count()} عمولة كمدفوعة")
+            print(f"✅ Marked {pending_commissions.count()} commissions as paid")
         else:
-            print("❌ تم إلغاء العملية")
+            print("❌ Operation cancelled")
     
     def _mark_affiliate_commissions_paid(self):
-        """تحديد عمولات شريك معين كمدفوعة"""
-        email = input("أدخل بريد الشريك الإلكتروني: ").strip()
+        """Mark commissions for a specific affiliate as paid"""
+        email = input("Enter affiliate email: ").strip()
         
         try:
             affiliate = User.objects.get(email=email)
         except User.DoesNotExist:
-            print(f"❌ لم يتم العثور على المستخدم: {email}")
+            print(f"❌ User not found: {email}")
             return
         
         pending_commissions = AffiliateCommission.objects.filter(
@@ -242,20 +242,20 @@ class ManualCommissionManager:
         )
         
         if not pending_commissions:
-            print(f"❌ لا توجد عمولات معلقة للشريك: {email}")
+            print(f"❌ No pending commissions for affiliate: {email}")
             return
         
         total_amount = sum(c.commission_amount for c in pending_commissions)
         
-        print(f"📊 سيتم تحديد {pending_commissions.count()} عمولة كمدفوعة للشريك: {email}")
-        print(f"💰 إجمالي المبلغ: ${total_amount:.2f}")
+        print(f"📊 {pending_commissions.count()} commissions will be marked as paid for affiliate: {email}")
+        print(f"💰 Total amount: ${total_amount:.2f}")
         
-        # عرض تفاصيل العمولات
-        print("\nتفاصيل العمولات:")
+        # Show commission details
+        print("\nCommission details:")
         for commission in pending_commissions:
             print(f"  ID: {commission.id} - ${commission.commission_amount:.2f} - {commission.created_at.strftime('%Y-%m-%d')}")
         
-        confirm = input("هل تريد المتابعة؟ (y/N): ")
+        confirm = input("Proceed? (y/N): ")
         if confirm.lower() == 'y':
             with transaction.atomic():
                 for commission in pending_commissions:
@@ -263,22 +263,22 @@ class ManualCommissionManager:
                     commission.paid_at = timezone.now()
                     commission.save()
                 
-                # تحديث إحصائيات الشريك
+                # Update affiliate stats
                 stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
                 stats.update_stats()
             
-            print(f"✅ تم تحديد {pending_commissions.count()} عمولة كمدفوعة للشريك: {email}")
+            print(f"✅ Marked {pending_commissions.count()} commissions as paid for affiliate: {email}")
         else:
-            print("❌ تم إلغاء العملية")
+            print("❌ Operation cancelled")
     
     def _mark_specific_commissions_paid(self):
-        """تحديد عمولات محددة بالـ ID كمدفوعة"""
-        ids_input = input("أدخل أرقام العمولات مفصولة بفاصلة (مثال: 1,2,3): ").strip()
+        """Mark specific commissions by ID as paid"""
+        ids_input = input("Enter commission IDs separated by commas (e.g., 1,2,3): ").strip()
         
         try:
             commission_ids = [int(id.strip()) for id in ids_input.split(',')]
         except ValueError:
-            print("❌ تنسيق غير صحيح للأرقام")
+            print("❌ Invalid number format")
             return
         
         commissions = AffiliateCommission.objects.filter(
@@ -287,20 +287,20 @@ class ManualCommissionManager:
         )
         
         if not commissions:
-            print("❌ لم يتم العثور على عمولات معلقة بهذه الأرقام")
+            print("❌ No pending commissions found for these IDs")
             return
         
         total_amount = sum(c.commission_amount for c in commissions)
         
-        print(f"📊 سيتم تحديد {commissions.count()} عمولة كمدفوعة")
-        print(f"💰 إجمالي المبلغ: ${total_amount:.2f}")
+        print(f"📊 {commissions.count()} commissions will be marked as paid")
+        print(f"💰 Total amount: ${total_amount:.2f}")
         
-        # عرض تفاصيل العمولات
-        print("\nتفاصيل العمولات:")
+        # Show commission details
+        print("\nCommission details:")
         for commission in commissions:
             print(f"  ID: {commission.id} - {commission.affiliate.email} - ${commission.commission_amount:.2f}")
         
-        confirm = input("هل تريد المتابعة؟ (y/N): ")
+        confirm = input("Proceed? (y/N): ")
         if confirm.lower() == 'y':
             with transaction.atomic():
                 for commission in commissions:
@@ -308,47 +308,47 @@ class ManualCommissionManager:
                     commission.paid_at = timezone.now()
                     commission.save()
                 
-                # تحديث إحصائيات الشركاء
+                # Update affiliates' stats
                 affiliates = set(c.affiliate for c in commissions)
                 for affiliate in affiliates:
                     stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
                     stats.update_stats()
             
-            print(f"✅ تم تحديد {commissions.count()} عمولة كمدفوعة")
+            print(f"✅ Marked {commissions.count()} commissions as paid")
         else:
-            print("❌ تم إلغاء العملية")
+            print("❌ Operation cancelled")
     
     def search_affiliate(self):
-        """البحث عن شريك معين"""
-        email = input("أدخل بريد الشريك الإلكتروني: ").strip()
+        """Search for a specific affiliate"""
+        email = input("Enter affiliate email: ").strip()
         
         try:
             affiliate = User.objects.get(email=email)
         except User.DoesNotExist:
-            print(f"❌ لم يتم العثور على المستخدم: {email}")
+            print(f"❌ User not found: {email}")
             return
         
-        print(f"\n🔍 تفاصيل الشريك: {email}")
+        print(f"\n🔍 Affiliate details: {email}")
         print("=" * 60)
         
-        # الإحصائيات
+        # Stats
         stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
         stats.update_stats()
         
-        print(f"📊 إجمالي الإحالات: {stats.total_referrals}")
-        print(f"🟢 الإحالات النشطة: {stats.active_referrals}")
-        print(f"💰 إجمالي العمولات: ${stats.total_commission_earned:.2f}")
-        print(f"✅ العمولات المدفوعة: ${stats.total_commission_paid:.2f}")
-        print(f"⏳ العمولات المعلقة: ${stats.total_commission_pending:.2f}")
+        print(f"📊 Total referrals: {stats.total_referrals}")
+        print(f"🟢 Active referrals: {stats.active_referrals}")
+        print(f"💰 Total commissions: ${stats.total_commission_earned:.2f}")
+        print(f"✅ Paid commissions: ${stats.total_commission_paid:.2f}")
+        print(f"⏳ Pending commissions: ${stats.total_commission_pending:.2f}")
         
-        # العمولات الأخيرة
+        # Recent commissions
         recent_commissions = AffiliateCommission.objects.filter(
             affiliate=affiliate
         ).order_by('-created_at')[:10]
         
         if recent_commissions:
-            print(f"\n📋 آخر {len(recent_commissions)} عمولات:")
-            print(f"{'ID':<5} {'المبلغ':<10} {'الحالة':<10} {'التاريخ':<12} {'المُحال':<25}")
+            print(f"\n📋 Last {len(recent_commissions)} commissions:")
+            print(f"{'ID':<5} {'Amount':<10} {'Status':<10} {'Date':<12} {'Referred':<25}")
             print("-" * 70)
             
             for commission in recent_commissions:
@@ -359,17 +359,17 @@ class ManualCommissionManager:
                       f"{commission.referred_user.email:<25}")
     
     def show_payout_requests(self):
-        """عرض طلبات السحب"""
-        print("\n📋 طلبات السحب")
+        """Show payout requests"""
+        print("\n📋 Payout requests")
         print("=" * 80)
         
         payout_requests = PayoutRequest.objects.all().order_by('-created_at')
         
         if not payout_requests:
-            print("❌ لا توجد طلبات سحب")
+            print("❌ No payout requests")
             return
         
-        print(f"{'ID':<5} {'الشريك':<25} {'المبلغ':<10} {'الحالة':<12} {'التاريخ':<12} {'الطريقة':<15}")
+        print(f"{'ID':<5} {'Affiliate':<25} {'Amount':<10} {'Status':<12} {'Date':<12} {'Method':<15}")
         print("-" * 80)
         
         for request in payout_requests:
@@ -381,48 +381,48 @@ class ManualCommissionManager:
                   f"{request.payment_method:<15}")
     
     def create_manual_commission(self):
-        """إنشاء عمولة يدوياً"""
-        print("\n➕ إنشاء عمولة يدوياً")
+        """Create a manual commission"""
+        print("\n➕ Create a manual commission")
         print("=" * 50)
         
-        # اختيار الشريك
-        affiliate_email = input("بريد الشريك الإلكتروني: ").strip()
+        # Select affiliate
+        affiliate_email = input("Affiliate email: ").strip()
         try:
             affiliate = User.objects.get(email=affiliate_email)
         except User.DoesNotExist:
-            print(f"❌ لم يتم العثور على المستخدم: {affiliate_email}")
+            print(f"❌ User not found: {affiliate_email}")
             return
         
-        # اختيار المستخدم المُحال
-        referred_email = input("بريد المستخدم المُحال: ").strip()
+        # Select referred user
+        referred_email = input("Referred user email: ").strip()
         try:
             referred_user = User.objects.get(email=referred_email)
         except User.DoesNotExist:
-            print(f"❌ لم يتم العثور على المستخدم: {referred_email}")
+            print(f"❌ User not found: {referred_email}")
             return
         
-        # المبلغ
+        # Amount
         try:
-            amount = Decimal(input("مبلغ العمولة: $").strip())
+            amount = Decimal(input("Commission amount: $").strip())
         except:
-            print("❌ مبلغ غير صحيح")
+            print("❌ Invalid amount")
             return
         
-        # الملاحظات
-        notes = input("ملاحظات (اختياري): ").strip()
+        # Notes
+        notes = input("Notes (optional): ").strip()
         
-        print(f"\n📋 تأكيد إنشاء العمولة:")
-        print(f"الشريك: {affiliate_email}")
-        print(f"المُحال: {referred_email}")
-        print(f"المبلغ: ${amount:.2f}")
-        print(f"الملاحظات: {notes or 'لا توجد'}")
+        print(f"\n📋 Confirm commission creation:")
+        print(f"Affiliate: {affiliate_email}")
+        print(f"Referred: {referred_email}")
+        print(f"Amount: ${amount:.2f}")
+        print(f"Notes: {notes or 'None'}")
         
-        confirm = input("هل تريد إنشاء العمولة؟ (y/N): ")
+        confirm = input("Create commission? (y/N): ")
         if confirm.lower() == 'y':
             commission = AffiliateCommission.objects.create(
                 affiliate=affiliate,
                 referred_user=referred_user,
-                payment=None,  # عمولة يدوية
+                payment=None,  # Manual commission
                 commission_amount=amount,
                 commission_percentage=self.COMMISSION_RATE * 100,
                 commission_type='one_time',
@@ -430,17 +430,17 @@ class ManualCommissionManager:
                 notes=notes
             )
             
-            # تحديث إحصائيات الشريك
+            # Update affiliate stats
             stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
             stats.update_stats()
             
-            print(f"✅ تم إنشاء العمولة بنجاح: ID {commission.id}")
+            print(f"✅ Commission created successfully: ID {commission.id}")
         else:
-            print("❌ تم إلغاء العملية")
+            print("❌ Operation cancelled")
     
     def update_all_stats(self):
-        """تحديث إحصائيات جميع الشركاء"""
-        print("\n🔄 تحديث إحصائيات الشركاء...")
+        """Update all affiliates' stats"""
+        print("\n🔄 Updating affiliates' stats...")
         
         affiliates = User.objects.filter(
             affiliate_commissions__isnull=False
@@ -453,49 +453,49 @@ class ManualCommissionManager:
             updated_count += 1
             
             if created:
-                print(f"➕ تم إنشاء إحصائيات جديدة: {affiliate.email}")
+                print(f"➕ Created new stats: {affiliate.email}")
             else:
-                print(f"🔄 تم تحديث إحصائيات: {affiliate.email}")
+                print(f"🔄 Updated stats: {affiliate.email}")
         
-        print(f"✅ تم تحديث إحصائيات {updated_count} شريك")
+        print(f"✅ Updated stats for {updated_count} affiliates")
     
     def detailed_affiliate_report(self):
-        """تقرير مفصل لشريك"""
-        email = input("أدخل بريد الشريك الإلكتروني: ").strip()
+        """Detailed report for an affiliate"""
+        email = input("Enter affiliate email: ").strip()
         
         try:
             affiliate = User.objects.get(email=email)
         except User.DoesNotExist:
-            print(f"❌ لم يتم العثور على المستخدم: {email}")
+            print(f"❌ User not found: {email}")
             return
         
-        print(f"\n📈 تقرير مفصل للشريك: {email}")
+        print(f"\n📈 Detailed affiliate report: {email}")
         print("=" * 80)
         
-        # الإحصائيات العامة
+        # General stats
         stats, _ = AffiliateStats.objects.get_or_create(user=affiliate)
         stats.update_stats()
         
-        print(f"📊 الإحصائيات العامة:")
-        print(f"  إجمالي الإحالات: {stats.total_referrals}")
-        print(f"  الإحالات النشطة: {stats.active_referrals}")
-        print(f"  إجمالي العمولات: ${stats.total_commission_earned:.2f}")
-        print(f"  العمولات المدفوعة: ${stats.total_commission_paid:.2f}")
-        print(f"  العمولات المعلقة: ${stats.total_commission_pending:.2f}")
+        print(f"📊 General stats:")
+        print(f"  Total referrals: {stats.total_referrals}")
+        print(f"  Active referrals: {stats.active_referrals}")
+        print(f"  Total commissions: ${stats.total_commission_earned:.2f}")
+        print(f"  Paid commissions: ${stats.total_commission_paid:.2f}")
+        print(f"  Pending commissions: ${stats.total_commission_pending:.2f}")
         
-        # الإحالات
+        # Referrals
         referrals = User.objects.filter(referred_by=affiliate)
         if referrals:
-            print(f"\n👥 الإحالات ({referrals.count()}):")
+            print(f"\n👥 Referrals ({referrals.count()}):")
             for referral in referrals:
-                subscription_status = "غير مشترك"
+                subscription_status = "Not subscribed"
                 if hasattr(referral, 'subscription'):
                     subscription_status = referral.subscription.status
                 
                 print(f"  {referral.email} - {subscription_status}")
         
-        # العمولات حسب الشهر
-        print(f"\n📅 العمولات حسب الشهر (آخر 12 شهر):")
+        # Commissions by month
+        print(f"\n📅 Commissions by month (last 12 months):")
         for i in range(12):
             month_start = timezone.now().replace(day=1) - timedelta(days=30*i)
             month_end = month_start + timedelta(days=32)
@@ -509,10 +509,10 @@ class ManualCommissionManager:
             month_amount = sum(c.commission_amount for c in month_commissions)
             
             if month_commissions.count() > 0:
-                print(f"  {month_start.strftime('%Y-%m')}: {month_commissions.count()} عمولة (${month_amount:.2f})")
+                print(f"  {month_start.strftime('%Y-%m')}: {month_commissions.count()} commissions (${month_amount:.2f})")
 
 def main():
-    """الدالة الرئيسية"""
+    """Main function"""
     manager = ManualCommissionManager()
     manager.show_main_menu()
 
